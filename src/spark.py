@@ -1,0 +1,89 @@
+import os
+import socket
+from typing import NamedTuple
+import requests
+from bs4 import BeautifulSoup
+import pyspark
+import tqdm
+import tarfile
+
+SPARKJQ_HOME = os.path.join(
+    os.path.expanduser("~"),
+    ".cache",
+    "spark-jobqueue",
+)
+
+class SparkContext(NamedTuple):
+    """
+    Context for Spark job.
+    """
+    home : str
+    version : str
+
+async def get_spark_context() -> SparkContext:
+    """
+    Get the aligned Spark versions from the Apache Spark website.
+    """
+    version = pyspark.__version__
+    
+    spark_home = os.path.join(
+        SPARKJQ_HOME,
+        f"spark-{version}-bin-hadoop3"
+    )
+
+    if os.path.exists(spark_home):
+        print(f"Spark home already exists: {spark_home}")
+        return SparkContext(
+            home=spark_home,
+            version=version
+        )
+    
+    os.makedirs(SPARKJQ_HOME, exist_ok=True)
+    # Get the latest Spark version from the Apache Spark website
+    url = f"https://dlcdn.apache.org/spark/spark-{version}/spark-{version}-bin-hadoop3.tgz"
+    temp_destination = os.path.join(
+        SPARKJQ_HOME,
+        f"spark-{version}-bin-hadoop3.tgz"
+    )
+
+    print(f"Downloading Spark from {url}")	
+    # Spark is large, so we use a streaming download and show a progress bar
+    with requests.get(url, stream=True) as response:
+        response.raise_for_status()
+        total_size = int(response.headers.get('content-length', 0))
+        block_size = 1024
+        with open(temp_destination, 'wb') as file, tqdm.tqdm(
+            desc=temp_destination,
+            total=total_size,
+            unit='iB',
+            unit_scale=True,
+            unit_divisor=1024,
+        ) as bar:
+            for data in response.iter_content(block_size):
+                file.write(data)
+                bar.update(len(data))    
+
+    print(f"Unpacking Spark to {spark_home}")
+    os.makedirs(os.path.dirname(spark_home), exist_ok=True)
+    # Unpack the tarball with a progress bar
+    with tarfile.open(temp_destination, "r:gz") as tar:
+        total_size = len(tar.getmembers())
+        with tqdm.tqdm(total=total_size, desc="Unpacking Spark") as bar:
+            for member in tar.getmembers():
+                tar.extract(member, SPARKJQ_HOME)
+                bar.update(1)
+    
+    # Remove the tarball after unpacking
+    os.remove(temp_destination)
+    print(f"Done. Spark is installed at {spark_home}")
+    return SparkContext(
+        home=spark_home,
+        version=version
+    )
+
+def is_port_open(host, port):
+    try:
+        with socket.create_connection((host, port), timeout=2):
+            return True
+    except Exception:
+        return False
