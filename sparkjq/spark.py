@@ -2,7 +2,6 @@ import os
 import socket
 from typing import NamedTuple
 import requests
-from bs4 import BeautifulSoup
 import pyspark
 import tqdm
 import tarfile

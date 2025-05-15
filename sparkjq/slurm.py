@@ -2,6 +2,7 @@
 import os
 import subprocess
 from typing import NamedTuple
+import tempfile
 
 
 def determine_master_host() -> str:
