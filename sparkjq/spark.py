@@ -86,3 +86,40 @@ def is_port_open(host, port):
             return True
     except Exception:
         return False
+    
+def setup_spark_environment_variables(
+    log_dir : str,
+    spark_home : str,
+    python_executable : str = None,
+    scratch_dir : str = None,
+) -> None:
+    """
+    Setup the environment variables for Spark.
+    """
+    os.environ["SPARK_HOME"] = spark_home
+    os.environ["SPARK_LOG_DIR"] = log_dir
+    if python_executable is not None:
+        os.environ["PYSPARK_PYTHON"] = python_executable
+    else:
+        # Use current python executable
+        if "PYSPARK_PYTHON" not in os.environ:
+            os.environ["PYSPARK_PYTHON"] = sys.executable
+
+    if scratch_dir is not None:
+        os.environ["SPARK_LOCAL_DIRS"] = scratch_dir
+
+def make_workers_file(
+    spark_home : str,
+    hostnames : list[str],
+) -> str:
+    
+    dir_to_store = os.path.join(
+        spark_home,
+        "conf"
+    )
+    os.makedirs(dir_to_store, exist_ok=True)
+    with open(os.path.join(dir_to_store, "workers"), "w") as f:
+        for hostname in hostnames:
+            f.write(f"{hostname}\n")
+    
+    return os.path.join(dir_to_store, "workers")

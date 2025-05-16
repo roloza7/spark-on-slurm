@@ -95,3 +95,28 @@ def get_slurm_context(
         scratch=scratch
     )
     
+def build_log_dir(
+    path : str = None,
+):
+    """
+    Build the log directory for the SLURM job.
+    """
+    if path is None:
+        path = os.path.realpath(".")
+        # # Use local path
+        # path = os.path.join(
+        #     ".",
+        #     os.environ.get("SLURM_JOB_ID", "slurm-jobqueue-logs"),
+        # )
+    else:
+        path = os.path.expanduser(path)
+    
+    # Append the job ID to the path
+    log_dir_name = f"{os.environ["SLURM_JOB_ID"]}-log"
+
+    path = os.path.join(path, log_dir_name)
+
+    if not os.path.exists(path):
+        os.makedirs(path, exist_ok=True)
+    
+    return path
