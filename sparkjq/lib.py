@@ -106,7 +106,7 @@ class SLURMCluster(object):
             self.handle = subprocess.Popen(
                 args,
                 preexec_fn=os.setsid,
-                stdout=subprocess.DEVNULL
+                stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
                 close_fds=True)
             # Wait for the worker to start
