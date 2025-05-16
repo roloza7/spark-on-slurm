@@ -105,10 +105,10 @@ class SLURMCluster(object):
             # This script will exit quickly after starting the worker
             self.handle = subprocess.Popen(
                 args,
-                creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP,
-                close_fds=True,
-                start_new_session=True)
-
+                preexec_fn=os.setsid,
+                stdout=os.devnull,
+                stderr=os.devnull,
+                close_fds=True)
             # Wait for the worker to start
             self.handle.wait()
 
