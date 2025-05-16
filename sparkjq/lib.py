@@ -112,7 +112,10 @@ class SLURMCluster(object):
             # Wait for the worker to start
             self.handle.wait()
 
-            sys.exit(0)
+            # Sleep forever to prevent slurm from killing
+            subprocess.run(
+                ["sleep", "infinity"],
+            )
 
     def master(self):
         """
@@ -131,7 +134,7 @@ class SLURMCluster(object):
 
         workers_list = get_worker_list()
 
-        # SSH into each worker
+        # SSH into each worker and send sigterm
         for worker in workers_list:
             print(f"Stopping worker on {worker}")
             args = [
