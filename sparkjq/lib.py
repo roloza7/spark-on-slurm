@@ -103,25 +103,14 @@ class SLURMCluster(object):
 
             # Execute the command blockingly
             # This script will exit quickly after starting the worker
-            self.handle = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            self.handle = subprocess.Popen(
+                args,
+                creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP,
+                close_fds=True,
+                start_new_session=True)
 
             # Wait for the worker to start
             self.handle.wait()
-
-            # Listen for heartbeat using ps | grep java
-            while True:
-                # Check if java process is running
-                ps_args = "ps | grep java"
-                proc = subprocess.Popen(ps_args, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                proc.wait()
-                # Check if there is any grep output and java process is running
-                grep_output = proc.stdout.read().decode("utf-8")
-                if "java" in grep_output:
-                    print(f"[{self.slurm_context.rank}] Alive worker on attached to {hostname}:{port}")
-                    time.sleep(5)
-                else:
-                    print(f"[{self.slurm_context.rank}] Worker on {hostname}:{port} is not running")
-                    break
 
             sys.exit(0)
 
