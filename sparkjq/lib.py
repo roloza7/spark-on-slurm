@@ -59,6 +59,7 @@ class SLURMCluster(object):
         os.environ["PYSPARK_PYTHON"] = os.environ.get("PYSPARK_PYTHON", sys.executable)
 
         os.environ["SPARK_LOCAL_DIRS"] = self.slurm_context.scratch
+        os.environ["SPARK_WORKER_MEMORY"] = os.environ.get("SLURM_MEM_PER_NODE", "4G")
     
         hostname, port = self.slurm_context.hostname, self.slurm_context.port
         if self.slurm_context.rank == 0:
