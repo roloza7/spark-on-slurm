@@ -35,6 +35,7 @@ class SLURMCluster(object):
         self.log_dir = build_log_dir(log_dir)
         
         self.handle = None
+        self.workers_file = None
         # From here on only the master node is working because the workers blocked
 
     def __enter__(self):
@@ -49,7 +50,7 @@ class SLURMCluster(object):
         )
 
         # Create conf/workers in spark home
-        _ = make_workers_file(
+        self.workers_file = make_workers_file(
             spark_home=self.spark_context.home,
             hostnames=get_worker_list(),
         )
@@ -91,6 +92,10 @@ class SLURMCluster(object):
         )
         # Wait for the cluster to stop
         self.handle.wait()
+
+        # Clean up the workers file
+        if self.workers_file:
+            os.remove(self.workers_file)
 
         if exc_type:
             raise exc_type(exc_value)
